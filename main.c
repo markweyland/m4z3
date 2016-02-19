@@ -1,49 +1,101 @@
+#include <stdbool.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
-#define W (5)
-#define H (6)
+#define W (7)
+#define H (3)
 #define S (W * H)
 
 void gen_maze(int w, int h, int *maze);
-void put_maze(int w, int h, int *maze);
+bool chk_maze(int w, int h, const int *maze, bool *visited);
+bool can_go_r(int w, int x, int n); /* right */
+bool can_go_l(int x, int n); /* left  */
+bool can_go_u(int y, int n); /* up */
+bool can_go_d(int h, int y, int n); /* down */
+void put_maze(int w, int h, const int *maze);
 
 int main(void) /* My programs don't fail. They crash. */
 {
-    int maze[S] = {0};
+    int maze[S] = {1, 1, 1, 1, 1, 1};
+    bool visited[S] = {false};
     srand(time(NULL));
-    gen_maze(W, H, maze);
+    do gen_maze(W, H, maze); while (chk_maze(W, H, maze, visited) == false);
     put_maze(W, H, maze);
     return EXIT_SUCCESS;
 }
 
 void gen_maze(int w, int h, int *maze)
 {
+    assert(w > 1);
+    assert(h > 1);
     assert(maze != NULL);
-    assert(w > 0);
-    assert(h > 0);
-    if (w > h) for (int i = 0; i < h; ++i)
+
+    if (w > h) for (int y = 0; y < h; ++y)
     {
-        for (int j = 0; j < w / 2; ++j) maze[i * w + j] = rand() % (w - 1 - j) + 1;
-        for (int j = w / 2; j < w; ++j) maze[i * w + j] = rand() % j + 1;
+        for (int x = 0; x < w / 2; ++x) maze[y * w + x] = rand() % (w - 1 - x) + 1;
+        for (int x = w / 2; x < w; ++x) maze[y * w + x] = rand() % x + 1;
     }
-    else for (int i = 0; i < w; ++i)
+    else for (int x = 0; x < w; ++x)
     {
-        for (int j = 0; j < h / 2; ++j) maze[j * w + i] = rand() % (h - 1 - j) + 1;
-        for (int j = h / 2; j < h; ++j) maze[j * w + i] = rand() % j + 1;
+        for (int y = 0; y < h / 2; ++y) maze[y * w + x] = rand() % (h - 1 - y) + 1;
+        for (int y = h / 2; y < h; ++y) maze[y * w + x] = rand() % y + 1;
     }
 }
 
-void put_maze(int w, int h, int *maze)
+bool chk_maze(int w, int h, const int *maze, bool *visited)
 {
+    assert(w > 1);
+    assert(h > 1);
     assert(maze != NULL);
-    assert(w > 0);
-    assert(h > 0);
-    for (int i = 0; i < h; ++i)
+    assert(visited != NULL);
+
+    for (int i = 0; i < w * h; ++i) visited[i] = false;
+    visited[0] = true;
+    for (int y = 0; y < h; ++y) for (int x = 0; x < w; ++x)
     {
-        for (int j = 0; j < w; ++j) printf("%2d ", maze[i * w + j]);
+        int n = maze[y * w + x];
+        if (can_go_r(w, x, n)) visited[y * w + (x + n)] = true;
+        if (can_go_l(x, n)) visited[y * w + (x - n)] = true;
+        if (can_go_u(y, n)) visited[(y - n) * w + x] = true;
+        if (can_go_d(h, y, n)) visited[(y + n) * w + x] = true;
+    }
+    for (int i = 0; i < w * h; ++i) if (visited[i] == false) return false;
+    return true;
+}
+
+bool can_go_r(int w, int x, int n)
+{
+    return x + n < w;
+}
+
+bool can_go_l(int x, int n)
+{
+    return x - n >= 0;
+}
+
+bool can_go_u(int y, int n)
+{
+    return y - n >= 0;
+}
+
+bool can_go_d(int h, int y, int n)
+{
+    return y + n < h;
+}
+
+void put_maze(int w, int h, const int *maze)
+{
+    assert(w > 1);
+    assert(h > 1);
+    assert(w <= 100);
+    assert(h <= 100);
+    assert(maze != NULL);
+
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x) printf("%2d ", maze[y * w + x]);
         putchar('\n');
     }
 }
